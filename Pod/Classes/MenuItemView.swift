@@ -23,6 +23,8 @@ open class MenuItemView: UIView {
             addSubview(customView)
         }
     }
+    public fileprivate(set) var selectedAction: ((UIView, Bool) -> Void)? = nil
+    
     public internal(set) var isSelected: Bool = false {
         didSet {
             if case .roundRect = menuOptions.focusMode {
@@ -47,7 +49,9 @@ open class MenuItemView: UIView {
                 descriptionWidthConstraint.constant = calculateLabelSize(descriptionLabel, maxWidth: maxWindowSize).width
             case let .image(image, selectedImage):
                 menuImageView.image = isSelected ? (selectedImage ?? image) : image
-            case .custom: break
+            case .custom:
+                guard let customView = self.customView else {return}
+                self.selectedAction?(customView, self.isSelected)
             }
         }
     }
@@ -56,7 +60,7 @@ open class MenuItemView: UIView {
         let imageView = UIImageView(image: image)
         imageView.translatesAutoresizingMaskIntoConstraints = false
         return imageView
-    }()
+        }()
     
     fileprivate var menuOptions: MenuViewCustomizable!
     fileprivate var menuItemOptions: MenuItemViewCustomizable!
@@ -93,9 +97,10 @@ open class MenuItemView: UIView {
                 self.setupImageView(image)
                 self.layoutImageView()
             })
-        case .custom(let view):
+        case .custom(let view, let selectedAction):
             commonInit({
                 self.setupCustomView(view)
+                self.selectedAction = selectedAction
                 self.layoutCustomView()
             })
         }
@@ -208,7 +213,7 @@ open class MenuItemView: UIView {
             titleLabel.heightAnchor.constraint(equalToConstant: titleLabelSize.height),
             ])
     }
-
+    
     fileprivate func layoutLabel() {
         // H:|[titleLabel](==labelSize.width)|
         // V:|[titleLabel]|
